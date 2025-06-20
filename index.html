@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Permissions-Sparegris 🐷</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      text-align: center;
+      padding: 2em;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      padding: 2em;
+      border-radius: 1em;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    input, select, button {
+      padding: 0.6em;
+      margin: 0.5em 0;
+      width: 80%;
+      font-size: 1em;
+    }
+
+    #pig {
+      font-size: 3em;
+      margin: 1em 0;
+    }
+
+    #history {
+      margin-top: 1em;
+      text-align: left;
+      max-height: 200px;
+      overflow-y: auto;
+      border-top: 1px solid #ddd;
+      padding-top: 1em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🐷Den Proaktive
+      Permissions-Sparegris🐷</h1>
+    <p>Indtast dit navn og hvor mange permissions du har fået (1-6)</p>
+
+    <input type="text" id="name" placeholder="Dit navn" />
+    <select id="amount">
+      <option value="1">1 permission</option>
+      <option value="2">2 permissions</option>
+      <option value="3">3 permissions</option>
+      <option value="4">4 permissions</option>
+      <option value="5">5 permissions</option>
+      <option value="6">6 permissions</option>
+    </select>
+    <br/>
+    <button onclick="addPermission()">Læg i sparegris</button>
+
+    <div id="pig">🐷💰: <span id="total">0</span> / ???</div>
+
+    <div id="winner" style="font-weight: bold; font-size: 1.2em; color: green;"></div>
+
+    <div id="history"></div>
+  </div>
+
+  <script>
+    let total = 0;
+    let goal = getRandomGoal();
+    const history = [];
+
+    function getRandomGoal() {
+      return Math.floor(Math.random() * (150 - 30 + 1)) + 30;
+    }
+
+    function addPermission() {
+      const name = document.getElementById("name").value.trim();
+      const amount = parseInt(document.getElementById("amount").value);
+
+      if (!name) {
+        alert("Skriv dit navn!");
+        return;
+      }
+
+      total += amount;
+      history.push(`${name} lagde ${amount} permission${amount > 1 ? 's' : ''} i grisen 🐷`);
+
+      document.getElementById("total").innerText = total;
+      updateHistory();
+
+      if (total >= goal) {
+        document.getElementById("winner").innerText = `${name} fik grisen til at sprænge og vinder! 🎉`;
+        resetPig();
+      } else {
+        document.getElementById("winner").innerText = "";
+      }
+
+      document.getElementById("name").value = "";
+    }
+
+    function updateHistory() {
+      document.getElementById("history").innerHTML = history.map(line => `<div>• ${line}</div>`).join("");
+    }
+
+    function resetPig() {
+      total = 0;
+      goal = getRandomGoal();
+      history.push("🐷 Grisen er nulstillet!");
+      updateHistory();
+      document.getElementById("total").innerText = total;
+    }
+  </script>
+</body>
+</html>
