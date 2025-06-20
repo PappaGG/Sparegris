@@ -69,9 +69,9 @@
 
   <script>
     const APP_ID = 'DBE99F8D-3A6C-4615-AD6C-3F3D3A35F55B';
-    const API_KEY = '126CEB7B-1D2C-45BC-8EED-EFB6460A6CB2';
+    const REST_API_KEY = '6C7DEFEE-0E86-4C54-8625-F23D87B24E9F';
+    const API_URL = 'https://eu-api.backendless.com';
     const TABLE_NAME = 'Permissions';
-    const API_URL = 'https://eu-api.backendless.com/v1/data';
 
     let total = 0;
     let goal = getRandomGoal();
@@ -95,17 +95,13 @@
       }
 
       try {
-        // Send til Backendless
-        await fetch(`${API_URL}/${APP_ID}/${API_KEY}/${TABLE_NAME}`, {
+        await fetch(`${API_URL}/${APP_ID}/${REST_API_KEY}/data/${TABLE_NAME}`, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ name, amount, timestamp: new Date().toISOString() })
         });
 
-        // Hent opdateret liste og opdater UI
         await updateFromBackendless();
-
-        // Tøm inputfelt
         nameInput.value = "";
         winnerDiv.innerText = "";
 
@@ -115,32 +111,35 @@
     }
 
     async function updateFromBackendless() {
-      const response = await fetch(`${API_URL}/${APP_ID}/${API_KEY}/${TABLE_NAME}?sortBy=timestamp`);
-      const data = await response.json();
+      try {
+        const response = await fetch(`${API_URL}/${APP_ID}/${REST_API_KEY}/data/${TABLE_NAME}?sortBy=timestamp`);
+        const data = await response.json();
 
-      history = data.map(entry => `${entry.name} lagde ${entry.amount} permission${entry.amount > 1 ? 's' : ''} i grisen 🐷`);
+        history = data.map(entry => `${entry.name} lagde ${entry.amount} permission${entry.amount > 1 ? 's' : ''} i grisen 🐷`);
+        total = data.reduce((sum, entry) => sum + entry.amount, 0);
 
-      total = data.reduce((sum, entry) => sum + entry.amount, 0);
+        if (!goal || total >= goal) {
+          goal = getRandomGoal();
+          document.getElementById("winner").innerText = `🐷 Grisen sprænges! Nulstiller...`;
+          await resetBackendlessData();
+          total = 0;
+          history.push("🐷 Grisen er nulstillet!");
+        }
 
-      if (!goal || total >= goal) {
-        goal = getRandomGoal();
-        document.getElementById("winner").innerText = `🐷 Grisen sprænges! Nulstiller...`;
-        await resetBackendlessData();
-        total = 0;
-        history.push("🐷 Grisen er nulstillet!");
+        document.getElementById("total").innerText = total;
+        document.getElementById("pig").innerText = `🐷💰: ${total} / ${goal}`;
+        updateHistory();
+      } catch (error) {
+        console.error("Fejl under hentning:", error);
       }
-
-      document.getElementById("total").innerText = total;
-      document.getElementById("pig").innerText = `🐷💰: ${total} / ${goal}`;
-      updateHistory();
     }
 
     async function resetBackendlessData() {
-      const response = await fetch(`${API_URL}/${APP_ID}/${API_KEY}/${TABLE_NAME}?pageSize=100`);
+      const response = await fetch(`${API_URL}/${APP_ID}/${REST_API_KEY}/data/${TABLE_NAME}?pageSize=100`);
       const entries = await response.json();
 
       await Promise.all(entries.map(e =>
-        fetch(`${API_URL}/${APP_ID}/${API_KEY}/${TABLE_NAME}/${e.objectId}`, {
+        fetch(`${API_URL}/${APP_ID}/${REST_API_KEY}/data/${TABLE_NAME}/${e.objectId}`, {
           method: 'DELETE'
         })
       ));
@@ -150,11 +149,10 @@
       document.getElementById("history").innerHTML = history.map(line => `<div>• ${line}</div>`).join("");
     }
 
-    // Poll Backendless hvert 5. sekund for opdateringer
+    // Live opdatering
     setInterval(updateFromBackendless, 5000);
-
-    // Initial hentning
     updateFromBackendless();
   </script>
 </body>
 </html>
+
